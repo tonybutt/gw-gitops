@@ -1,0 +1,388 @@
+flux:
+  interval: 2m
+  rollback:
+    cleanupOnFail: false
+
+networkPolicies:
+  enabled: false
+
+kiali:
+  enabled: false
+
+istio:
+  sourceType: helmRepo
+  enabled: true
+
+istioOperator:
+  sourceType: helmRepo
+  enabled: true
+
+monitoring:
+  sourceType: helmRepo
+  enabled: true
+  values:
+    prometheus:
+      prometheusSpec:
+        resources:
+          requests:
+            cpu: 200m
+            memory: 1Gi
+
+loki:
+  sourceType: helmRepo
+  enabled: true
+  strategy: scalable
+  values:
+    minio:
+      enabled: true
+    write:
+      replicas: 1
+      persistence:
+        size: 2Gi
+      resources:
+        limits:
+          cpu: 200m
+          memory: 400Mi
+        requests:
+          cpu: 200m
+          memory: 400Mi
+    read:
+      replicas: 1
+      persistence:
+        size: 2Gi
+      resources:
+        limits:
+          cpu: 200m
+          memory: 400Mi
+        requests:
+          cpu: 200m
+          memory: 400Mi
+    extraobjects:
+    - apiVersion: "security.istio.io/v1beta1"
+      kind: PeerAuthentication
+      metadata:
+        name: loki-minio-endpoint-exception
+        namespace: logging
+      spec:
+        mtls:
+          mode: STRICT
+        selector: 
+          matchLabels:
+            app: minio
+        portLevelMtls:
+          "9000":
+            mode: PERMISSIVE
+promtail:
+  sourceType: helmRepo
+  enabled: true
+
+kyverno:
+  sourceType: helmRepo
+  enabled: true
+
+kyvernoPolicies:
+  sourceType: helmRepo
+  enabled: true
+  values:
+    policies:
+      restrict-volume-types:
+        validationFailureAction: Audit
+      restrict-image-registries:
+        validationFailureAction: Audit
+      restrict-host-path-write:
+        validationFailureAction: Audit
+      restrict-host-path-mount:
+        validationFailureAction: Audit
+      require-non-root-user:
+        validationFailureAction: Audit
+      require-non-root-group:
+        validationFailureAction: Audit
+      disallow-privileged-containers:
+        validationFailureAction: Audit
+      require-drop-all-capabilities:
+        validationFailureAction: Audit
+      restrict-host-path-mount-pv:
+        validationFailureAction: Audit
+
+neuvector:
+  sourceType: helmRepo
+  enabled: false
+  values:
+    k3s:
+      enabled: true
+
+sso:
+  client_id: il2_eb21db65-3118-4017-bfe7-86829038d3dc_apps
+  client_secret: "123456789"
+  name: SSO
+  url: https://login.gw.local/auth/realms/gamewarden
+  # certificateAuthority:
+  #   cert: |
+  #
+  #     -----BEGIN CERTIFICATE-----#     
+  #     MIIE5TCCAs2gAwIBAgIBAjANBgkqhkiG9w0BAQsFADAXMRUwEwYDVQQDEwxMb2Nh#     
+  #     bCBEZXYgQ0EwHhcNMjUwMzI1MTgyNTAxWhcNMjcwMzI1MTgyNTAxWjAVMRMwEQYD#     
+  #     VQQDDAoqLmd3LmxvY2FsMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA#     
+  #     kyMnpUr8JMzEXDKTwhzG4FiLrhtYyLABhlP2WRSNO1Twg4x3QrHaDRDY6e6y7gGl#     
+  #     Pe8dk0AvSyDX3dcmT83Z0hzcrON/WDoqWjBzGQWOccEAjxchvYoTpso0vMyXBtqe#     
+  #     HF3iLtsyBXoAZGIxpw0iQK1MsRDcHTkZKf6rsfxtSBm36bZFweRFCD1wnGrsghrl#     
+  #     RmOeVJ1y+67uGkQRc30nwnmE0ZD1X26vGxJAx2mmNOFtoDZ/kA43vu0jxJoDdxvi#     
+  #     4yaFwMS8SxikmRHnuRNuy7NMYBCUQfdLkpuojaGwI/apczLt8u57D2yaIFeodHqb#     
+  #     el+Ocaaj4KRblG1dTgn+I+okakbILa6PCZKubQrTOOO5XOSz0d0nYcemFvfaCY8M#     
+  #     2zd7hy7uWPEAPJYcl8YqHlWaTnZkxvUO2MLcuzcLSrTzEXDzw3DUKeOSfkSSbRYp#     
+  #     VnGQhMnM+dSHolcXyj2z29/JaJbZDVG5IeyTRyGIAMhjlQ/jb2dW53X2wVHPBzoK#     
+  #     OfO+o/B2NOeDo4qNAB4rlooiM5yFrz113cdSMtrHsjLMKNZZ/HgqCmPM6hoUQv5/#     
+  #     l7eabbJi30cen60T5u5+51xR5ZFfjfq2oRXwjDnEd6vO2yNbVARdp+QEGRclOZEI#     
+  #     ZULoAyHWp5vHpzMCGVppGrG9+vw7PQrqjQw0n8AlhJsCAwEAAaM+MDwwDgYDVR0P#     
+  #     AQH/BAQDAgWgMBMGA1UdJQQMMAoGCCsGAQUFBwMBMBUGA1UdEQQOMAyCCiouZ3cu#     
+  #     bG9jYWwwDQYJKoZIhvcNAQELBQADggIBAIOdTkHeuObOo/aicDFusViPJChA8Dsp#     
+  #     auu6g5w8HgEbGIfMsmbFwNqcdeVKQODIRc2Ma3OWQfgcJWsesJHsQUXupBw5OCyn#     
+  #     OIx+4vhQyng3xmg8yEha4TUXhvi4ojhNnnBT1k9IXVTegg/7r7eoD270YD3dHmLA#     
+  #     +balzq/jWt3oWaJwZ7XfhyjEL30Qp1RPZR45heDsVkQoERz3g+IZkt0VKI2WclXO#     
+  #     sxmbAshQPdGz8RjLBSwGglZJOB6DwPSMd3DgtbFCHcAtPC91+hqkgtVHlF7jQwWQ#     
+  #     ueKbnHuntxzXTJJKBE+anjNae24ItFuyicBEqy0oErj+c1ECNPl+bBACGdQPGFx/#     
+  #     FWsBbOD1RiD7R3Z1sPPHrrnsE8fy9DXqCLrIkgqF6IKJdp8MboUqlrw/n6WXbiwh#     
+  #     rD9KGOzcYXta6PtNxI709QWVk6xZrl84oSfu41M4emlQC7HuouQ9HxSUiufnWM4r#     
+  #     dx2vTgTMmubBJ7MMO6T6Zpu+OP3+vc+O8PcY2nLQHv0Ejy0uIcepP8U5uwCkmGJ5#     
+  #     lksZdWr/wPv1wcMqAyyRFwqojYDHmQt07Yl0sxQ7shVFvaQP3rZLrH0njGXFHVu6#     
+  #     dN8mRMi/r49h4LZLGwVOir/+bH58Z1V/TACqVfNF3P8O1n5lroqJkrB2LCKTWL/+#     
+  #     8AzzKDmbdub2#     
+  #     -----END CERTIFICATE-----#     
+
+grafana:
+  values:
+    grafana.ini:
+      auth.generic_oauth:
+        api_url: "https://login.gw.local/auth/realms/gamewarden/protocol/openid-connect/userinfo"
+        auth_url: "https://login.gw.local/auth/realms/gamewarden/protocol/openid-connect/auth"
+        client_id: "il2_eb21db65-3118-4017-bfe7-86829038d3dc_apps" #gitleaks:allow
+        client_secret: "123456789"
+        enabled: true
+        groups_attribute_path: "groups"
+        name: "Game Warden SSO"
+        role_attribute_path: "contains(groups[*], '/Gamewarden/grafana-server-admin') && 'GrafanaAdmin' || contains(groups[*], '/Gamewarden/grafana-admin') && 'Admin' || 'Viewer'"
+        role_attribute_strict: true
+        scopes: "openid profile email grafana"
+        token_url: "https://login.gw.local/auth/realms/gamewarden/protocol/openid-connect/token"
+
+
+addons:
+  authservice:
+    enabled: true
+    chains:
+      APP:
+        callback_uri: https://APP.gw.local
+        client_id: il2_eb21db65-3118-4017-bfe7-86829038d3dc_apps
+        client_secret: "123456789"
+        match:
+          prefix: "APP.gw.local"
+  argocd:
+    enabled: true
+    sso:
+      client_id: "il2_eb21db65-3118-4017-bfe7-86829038d3dc_apps" #gitleaks:allow
+      client_secret: "123456789"
+      enabled: true
+    values:
+      server:
+        extraArgs:
+        - --insecure
+        - --repo-server-plaintext
+      repoServer:
+        extraArgs:
+        - --disable-tls
+      controller:
+        extraArgs:
+        - --repo-server-plaintext
+      redis-bb:
+        networkPolicy:
+          enabled: false
+      argocd-apps:
+        applications:
+          - destination:
+              namespace: APP
+              server: https://kubernetes.default.svc
+            ignoreDifferences:
+              - jsonPointers:
+                  - /data
+                  - /stringData
+                kind: Secret
+                name: generated-secrets
+                namespace: APP
+            info:
+              - name: url
+                value: https://github.com/second-front/uchart
+            name: APP-ENV
+            namespace: argocd
+            project: default
+            sources:
+              - helm:
+                  valueFiles:
+                    - $values/app/base.yaml
+                    - $values/app/ENV.yaml
+                path: ./
+                repoURL: https://github.com/second-front/uchart.git
+                targetRevision: 1.0.10
+              - ref: values
+                repoURL: https://github.com/tonybutt/gw-gitops.git
+                targetRevision: main
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              managedNamespaceMetadata:
+                labels:
+                  istio-injection: enabled
+              syncOptions:
+                - CreateNamespace=true
+                - Validate=false
+                - RespectIgnoreDifferences=true
+  keycloak:
+    enabled: true
+    postRenderers:
+      - kustomize:
+          patchesStrategicMerge:
+            - apiVersion: v1
+              kind: Service
+              metadata:
+                name: keycloak-headless
+                namespace: keycloak
+              spec:
+                ports:
+                  - name: tcp
+                    port: 7800
+                    protocol: TCP
+                    targetPort: tcp
+                  - name: tcp-fd
+                    port: 57800
+                    protocol: TCP
+                    targetPort: tcp-fd
+      - kustomize:
+          patchesStrategicMerge:
+            - apiVersion: networking.istio.io/v1
+              kind: VirtualService
+              metadata:
+                name: keycloak
+                namespace: keycloak
+              spec:
+                tls: null
+    values:
+      replicas: 1
+      args:
+        - "start-dev"
+        - --import-realm
+      extraEnv: |-
+        - name: KC_HTTPS_CLIENT_AUTH
+          value: request
+        - name: KC_HOSTNAME
+          value: login.gw.local
+        - name: KC_LOG_LEVEL
+          value: "org.keycloak.events:DEBUG,org.infinispan:INFO,org.jgroups:INFO"
+        - name: QUARKUS_HTTP_ACCESS_LOG_ENABLED
+          value: "true"
+        - name: KC_HOSTNAME_STRICT
+          value: "false"
+        - name: KC_HOSTNAME_STRICT_HTTPS
+          value: "false"
+        - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
+          value: nginx
+        - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT
+          value: istio-mtls-client-certificate
+        - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT_CHAIN_PREFIX
+          value: UNUSED
+        - name: KC_PROXY_HEADERS
+          value: xforwarded
+        - name: KC_PROXY_ADDRESS_FORWARDING
+          value: "true"
+        - name: KC_HTTP_ENABLED
+          value: "true"
+        - name: QUANTUM_EMITTER_NATS_SERVER
+          value: nats
+      extraInitContainers: |-
+        - name: plugin
+          image: registry1.dso.mil/ironbank/big-bang/p1-keycloak-plugin:3.5.7
+          command:
+          - sh
+          - -c
+          - |
+            cp /app/p1-keycloak-plugin.jar /init
+            ls -l /init
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+          - name: plugin
+            mountPath: "/init"
+      extraPorts:
+        - containerPort: 7800
+          name: tcp
+          protocol: TCP
+        - containerPort: 57800
+          name: tcp-fd
+          protocol: TCP
+      extraVolumeMounts: |-
+        - name: plugin
+          mountPath: /opt/keycloak/providers/p1-keycloak-plugin.jar
+          subPath: p1-keycloak-plugin.jar
+        - name: quarkusproperties
+          mountPath: /opt/keycloak/conf/quarkus.properties
+          subPath: quarkus.properties
+        - name: realm
+          mountPath: /opt/keycloak/data/import/realm.json
+          subPath: realm.json
+          readOnly: true
+      extraVolumes: |-
+        - name: plugin
+          emptyDir: {}
+        - name: quarkusproperties
+          secret:
+            secretName: keycloak-quarkusproperties
+            defaultMode: 0777
+        - name: realm
+          configMap:
+            name: gamewarden-realm
+      hostname: gw.local
+      istio:
+        enabled: true
+        keycloak:
+          gateways:
+            - istio-system/public
+          hosts:
+            - login.gw.local
+      proxy:
+        mode: xforwarded
+      secrets:
+        env:
+          stringData:
+            JAVA_OPTS_APPEND: -Djgroups.dns.query=keycloak-headless.keycloak.svc.cluster.local
+        quarkusproperties:
+          stringData:
+            quarkus.properties: |-
+              quarkus.http.non-application-root-path=/
+              quarkus.kc-routing.path-redirect./=/auth/realms/gamewarden/account
+              quarkus.kc-routing.path-redirect./auth=/auth/realms/gamewarden/account
+              quarkus.kc-routing.path-redirect./register=/auth/realms/gamewarden/protocol/openid-connect/registrations?client_id=account&response_type=code
+              quarkus.kc-routing.path-prefix./oauth/authorize=/auth/realms/gamewarden/protocol/openid-connect/auth
+              quarkus.kc-routing.path-filter./api/v4/user=/auth/realms/gamewarden/protocol/openid-connect/userinfo
+              quarkus.kc-routing.path-filter./oauth/token=/auth/realms/gamewarden/protocol/openid-connect/token
+              quarkus.kc-routing.path-recursive-block./metrics=8443
+              quarkus.kc-routing.path-recursive-block./health=8443
+              quarkus.http.cors=true
+              quarkus.http.cors.methods=OPTIONS,POST,GET,PATCH,PUT,DELETE
+              quarkus.http.cors.headers=Content-Disposition,Access-Control-Allow-Headers,Content-Type,Authorization,X-Requested-With
+              quarkus.http.cors.access-control-max-age=24H
+              quarkus.http.cors.access-control-allow-credentials=true
+              quarkus.http.cors.origins=*
+      service:
+        extraPorts: null
+        httpPort: 8080
+  metricsServer:
+    sourceType: helmRepo
+    enabled: auto
+    values:
+      args:
+      - --kubelet-insecure-tls
+
+  minioOperator:
+    sourceType: helmRepo
+    enabled: true
